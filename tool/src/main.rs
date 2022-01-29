@@ -32,7 +32,6 @@ enum Commands {
     },
 }
 
-#[show_image::main]
 fn main() {
     let args = Cli::parse();
 
@@ -64,56 +63,66 @@ fn main() {
                 );
             }
         }
-        Commands::View { file } => {
-            let file_path = Path::new(file);
-            let file = File::open(file).unwrap_or_else(|error| {
-                eprintln!("failed to open file: {}", error);
-                std::process::exit(1)
-            });
-            let mut reader = BufReader::new(file);
-            let image = qoi::Image::from_reader(&mut reader).unwrap_or_else(|error| {
-                eprintln!("failed to parse file: {}", error);
-                std::process::exit(1)
-            });
+        Commands::View { file: _ } => {
+            show_image::run_context(viewer_main);
+        }
+    }
+}
 
-            let view = ImageView::new(
-                ImageInfo::rgba8(image.header.width as u32, image.header.height as u32),
-                &image.buffer[..],
-            );
+fn viewer_main() {
+    let args = Cli::parse();
+    let file = match &args.command {
+        Commands::View { file } => file,
+        _ => return, // We've already parsed the arguments once, so this shouldn't be an issue
+    };
 
-            let name = file_path
-                .file_stem()
-                .and_then(|x| x.to_str())
-                .unwrap_or("image");
+    let file_path = Path::new(file);
+    let file = File::open(file).unwrap_or_else(|error| {
+        eprintln!("failed to open file: {}", error);
+        std::process::exit(1)
+    });
+    let mut reader = BufReader::new(file);
+    let image = qoi::Image::from_reader(&mut reader).unwrap_or_else(|error| {
+        eprintln!("failed to parse file: {}", error);
+        std::process::exit(1)
+    });
 
-            let window_options = WindowOptions {
-                preserve_aspect_ratio: true,
-                background_color: Color::rgb(0.1568627451, 0.1568627451, 0.1568627451),
-                start_hidden: false,
-                size: Some([image.header.width as u32, image.header.height as u32]),
-                resizable: true,
-                borderless: false,
-                overlays_visible: true,
-                default_controls: true,
-            };
-            let window = create_window(name, window_options).unwrap();
-            window.set_image(name, view).unwrap();
+    let view = ImageView::new(
+        ImageInfo::rgba8(image.header.width as u32, image.header.height as u32),
+        &image.buffer[..],
+    );
 
-            for event in window.event_channel().map_err(|e| e.to_string()).unwrap() {
-                if let event::WindowEvent::KeyboardInput(event) = event {
-                    let escape_pressed = !event.is_synthetic
-                        && event.input.key_code == Some(event::VirtualKeyCode::Escape)
-                        && event.input.state.is_pressed();
+    let name = file_path
+        .file_stem()
+        .and_then(|x| x.to_str())
+        .unwrap_or("image");
 
-                    let cmd_w_pressed = !event.is_synthetic
-                        && event.input.key_code == Some(event::VirtualKeyCode::W)
-                        && event.input.modifiers == event::ModifiersState::LOGO
-                        && event.input.state.is_pressed();
+    let window_options = WindowOptions {
+        preserve_aspect_ratio: true,
+        background_color: Color::rgb(0.1568627451, 0.1568627451, 0.1568627451),
+        start_hidden: false,
+        size: Some([image.header.width as u32, image.header.height as u32]),
+        resizable: true,
+        borderless: false,
+        overlays_visible: true,
+        default_controls: true,
+    };
+    let window = create_window(name, window_options).unwrap();
+    window.set_image(name, view).unwrap();
 
-                    if escape_pressed || cmd_w_pressed {
-                        break;
-                    }
-                }
+    for event in window.event_channel().map_err(|e| e.to_string()).unwrap() {
+        if let event::WindowEvent::KeyboardInput(event) = event {
+            let escape_pressed = !event.is_synthetic
+                && event.input.key_code == Some(event::VirtualKeyCode::Escape)
+                && event.input.state.is_pressed();
+
+            let cmd_w_pressed = !event.is_synthetic
+                && event.input.key_code == Some(event::VirtualKeyCode::W)
+                && event.input.modifiers == event::ModifiersState::LOGO
+                && event.input.state.is_pressed();
+
+            if escape_pressed || cmd_w_pressed {
+                break;
             }
         }
     }
