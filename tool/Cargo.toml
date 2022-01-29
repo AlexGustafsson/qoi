@@ -1,0 +1,9 @@
+[package]
+name = "tool"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "3.0.13", features = ["derive"] }
+qoi = { path = "../qoi" }
+show-image = "0.10.1"
