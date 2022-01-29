@@ -96,6 +96,17 @@ Any help with the project is more than welcome. Note though that this project is
 # Clone the repository
 https://github.com/AlexGustafsson/qoi.git && cd qoi
 
-# Build
+# Build for the native platform
 cargo build
+
+# Produce release builds for all platforms
+cargo build
+```
+
+You might need to install toolchains for cross-compiling.
+
+```shell
+rustup target add x86_64-unknown-linux-musl
+rustup target add x86_64-unknown-darwin-musl
+rustup target add x86_64-apple-darwin
 ```
