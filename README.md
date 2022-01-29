@@ -54,7 +54,7 @@ Optionally check out a specific version.
 git checkout v0.1.0
 ```
 
-Build the exporter.
+Build the project.
 
 ```shell
 cargo build --release
